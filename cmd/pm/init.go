@@ -50,6 +50,20 @@ func initVault() {
 	if err != nil {
 		panic(err)
 	}
+
+	createEntriesTable := `
+	CREATE TABLE entries (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		service TEXT UNIQUE NOT NULL,
+		username TEXT NOT NULL,
+		password BLOB NOT NULL,
+		nonce BLOB NOT NULL
+	);
+	`
+	_, err = db.Exec(createEntriesTable)
+	if err != nil {
+		panic(err)
+	}
 	
 	salt := make([]byte, 16)
 	_, err = rand.Read(salt)
