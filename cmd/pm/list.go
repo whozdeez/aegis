@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/storage"
 	"github.com/spf13/cobra"
@@ -23,6 +24,8 @@ func init() {
 }
 
 func runList() {
+	fmt.Println()
+
 	entries, err := storage.ListEntries("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -30,14 +33,22 @@ func runList() {
 	}
 
 	if len(entries) == 0 {
-		fmt.Println("No entries found")
+		fmt.Println("ℹ No entries found")
 		return
 	}
 
-	fmt.Printf("Found %d entries\n\n", len(entries))
-	fmt.Printf("%-12s %s\n", "SERVICE", "USERNAME")
+	fmt.Printf("🔐 Stored entries (%d)\n\n", len(entries))
 
+	// Header
+	fmt.Printf("%-16s %s\n", "SERVICE", "USERNAME")
+	fmt.Println(strings.Repeat("─", 32))
+
+	// Rows
 	for _, e := range entries {
-		fmt.Printf("%-12s %s\n", e.Service, e.Username)
+		fmt.Printf("%-16s %s\n", e.Service, e.Username)
 	}
+
+	// Hint
+	fmt.Println("\nℹ Use `pm get <service>` to view a password")
 }
+

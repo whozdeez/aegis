@@ -33,64 +33,79 @@ func init() {
 func runGet(service string) {
 	const maxAttempts = 3
 
-	// 1. Ambil entry (sekali)
+	fmt.Println()
+
+	// ===== GET ENTRY =====
 	username, ciphertext, nonce, err := storage.GetEntry("data/vault.db", service)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("❌ Service not found")
 		return
 	}
 
-	// 2. Ambil vault meta (sekali)
+	// ===== VAULT META =====
 	salt, checkCipher, checkNonce, err := vault.GetVaultMeta("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	// 3. Loop percobaan master password
+	// ===== AUTH LOOP =====
 	for attempts := 1; attempts <= maxAttempts; attempts++ {
 
-		// 3a. Input master password
-		master, err := input.ReadHidden("Enter master password: ")
+		master, err := input.ReadHidden("🔐 Enter master password: ")
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
-		defer security.ZeroBytes(master)
 
-		// 3b. Integrity check (VALIDASI MASTER PASSWORD)
-		err = vault.VerifyMasterPassword(master, salt, checkCipher, checkNonce)
-		if err != nil {
+		// --- integrity check ---
+		if err := vault.VerifyMasterPassword(master, salt, checkCipher, checkNonce); err != nil {
 			fmt.Println("❌ Wrong master password")
+			security.ZeroBytes(master)
 			continue
 		}
 
-		// 3c. Derive key (master password SUDAH valid)
+		// --- derive key ---
 		key, err := crypto.DeriveKey(master, salt)
+		security.ZeroBytes(master)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
-		defer security.ZeroBytes(key)
 
-		// 3d. Decrypt password entry
+		// --- decrypt ---
 		plaintext, err := crypto.DecryptAESGCM(key, ciphertext, nonce)
+		security.ZeroBytes(key)
 		if err != nil {
 			fmt.Println("❌ Vault data corrupted")
 			return
 		}
-		defer security.ZeroBytes(plaintext)
 
-		// 3e. Tampilkan hasil
+		// ===== SUCCESS =====
+		fmt.Println("\n✔ Access granted")
 		fmt.Println("Service :", service)
 		fmt.Println("Username:", username)
-		fmt.Println("Password:", string(plaintext))
+
+		// ===== SHOW PASSWORD CONFIRMATION =====
+		fmt.Print("\nShow password? (y/N): ")
+		var choice string
+		fmt.Scanln(&choice)
+
+		if choice == "y" || choice == "Y" {
+			fmt.Println("Password:", string(plaintext))
+		} else {
+			fmt.Println("ℹ Password hidden")
+		}
+
+		security.ZeroBytes(plaintext)
 		return
 	}
 
-	// 4. Jika semua attempt gagal
+	// ===== LOCKOUT =====
 	fmt.Println("🔒 Too many failed attempts")
 }
+
+
 
 
 

@@ -6,7 +6,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/input"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/security"
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/storage"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -24,33 +27,62 @@ func init() {
 }
 
 func runDelete(service string) {
+	fmt.Println()
+
+	// ===== CHECK EXISTENCE =====
 	exists, err := storage.EntryExists("data/vault.db", service)
 	if err != nil {
+		fmt.Println("inside err exist")
 		fmt.Println("Error:", err)
 		return
 	}
 
 	if !exists {
-		fmt.Printf("Service '%s' not found\n", service)
+		fmt.Println("❌ Service not found")
 		return
 	}
 
-	fmt.Printf("Are you sure you want to delete '%s'? (y/N): ", service)
+	fmt.Println("Service :", service)
+	fmt.Println("ℹ This action cannot be undone")
 
-	var confirm string
-	fmt.Scanln(&confirm)
-
-	if confirm != "y" && confirm != "Y" {
-		fmt.Println("Delete cancelled")
+	// ===== MASTER PASSWORD =====
+	master, err := input.ReadHidden("🔐 Enter master password: ")
+	if err != nil {
+		fmt.Println("Error:", err)
 		return
 	}
+	defer security.ZeroBytes(master)
 
-	err = storage.DeleteEntry("data/vault.db", service)
+	// ===== VAULT META =====
+	salt, checkCipher, checkNonce, err := vault.GetVaultMeta("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	fmt.Println("Service deleted successfully")
+	// ===== INTEGRITY CHECK =====
+	if err := vault.VerifyMasterPassword(master, salt, checkCipher, checkNonce); err != nil {
+		fmt.Println("❌ Wrong master password")
+		return
+	}
+
+	// ===== CONFIRMATION =====
+	fmt.Print("\nDelete this entry? (y/N): ")
+	var confirm string
+	fmt.Scanln(&confirm)
+
+	if confirm != "y" && confirm != "Y" {
+		fmt.Println("ℹ Delete cancelled")
+		return
+	}
+
+	// ===== DELETE =====
+	if err := storage.DeleteEntry("data/vault.db", service); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Println("✔ Service deleted successfully")
 }
+
 

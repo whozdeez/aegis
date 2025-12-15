@@ -25,17 +25,29 @@ func init() {
 }
 
 func runAdd() {
-	// 1. Service name
+	fmt.Println()
+
+	// ===== SERVICE =====
 	var service string
 	fmt.Print("Service name: ")
 	fmt.Scanln(&service)
 
-	// 2. Username
+	if service == "" {
+		fmt.Println("❌ Service name cannot be empty")
+		return
+	}
+
+	// ===== USERNAME =====
 	var username string
 	fmt.Print("Username: ")
 	fmt.Scanln(&username)
 
-	// 3. Password (hidden)
+	if username == "" {
+		fmt.Println("❌ Username cannot be empty")
+		return
+	}
+
+	// ===== PASSWORD =====
 	password, err := input.ReadHidden("Password: ")
 	if err != nil {
 		fmt.Println("Error reading password:", err)
@@ -43,29 +55,50 @@ func runAdd() {
 	}
 	defer security.ZeroBytes(password)
 
-	// 4. Master password
-	masterPassword, err := input.ReadHidden("Enter master password: ")
+	if len(password) == 0 {
+		fmt.Println("❌ Password cannot be empty")
+		return
+	}
+
+	fmt.Println()
+
+	// ===== MASTER PASSWORD =====
+	masterPassword, err := input.ReadHidden("🔐 Enter master password: ")
 	if err != nil {
 		fmt.Println("Error reading master password:", err)
 		return
 	}
 	defer security.ZeroBytes(masterPassword)
 
-	//  5. Ambil vault meta (salt + integrity check data)
+	// ===== VAULT META =====
 	salt, checkCipher, checkNonce, err := vault.GetVaultMeta("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	//  6. Integrity check (VALIDASI MASTER PASSWORD)
-	err = vault.VerifyMasterPassword(masterPassword, salt, checkCipher, checkNonce)
-	if err != nil {
+	// ===== INTEGRITY CHECK =====
+	if err := vault.VerifyMasterPassword(masterPassword, salt, checkCipher, checkNonce); err != nil {
 		fmt.Println("❌ Wrong master password")
 		return
 	}
 
-	// 7. Derive key (master password SUDAH valid)
+	// ===== SUMMARY =====
+	fmt.Println("\nSummary:")
+	fmt.Println("- Service :", service)
+	fmt.Println("- Username:", username)
+	fmt.Println("- Password: set")
+
+	fmt.Print("\nSave this entry? (y/N): ")
+	var choice string
+	fmt.Scanln(&choice)
+
+	if choice != "y" && choice != "Y" {
+		fmt.Println("ℹ Add cancelled")
+		return
+	}
+
+	// ===== DERIVE KEY =====
 	key, err := crypto.DeriveKey(masterPassword, salt)
 	if err != nil {
 		fmt.Println("Key derivation failed:", err)
@@ -73,14 +106,14 @@ func runAdd() {
 	}
 	defer security.ZeroBytes(key)
 
-	// 8. Encrypt password
+	// ===== ENCRYPT =====
 	ciphertext, nonce, err := crypto.EncryptAESGCM(key, password)
 	if err != nil {
 		fmt.Println("Encryption failed:", err)
 		return
 	}
 
-	// 9. Simpan ke DB
+	// ===== INSERT =====
 	err = storage.InsertEntry(
 		"data/vault.db",
 		service,
@@ -89,9 +122,10 @@ func runAdd() {
 		nonce,
 	)
 	if err != nil {
-		fmt.Println("Failed to save entry:", err)
+		fmt.Println("❌ Service already exists")
 		return
 	}
 
-	fmt.Println("Password saved successfully 🔐")
+	fmt.Println("✔ Password saved successfully 🔐")
 }
+
