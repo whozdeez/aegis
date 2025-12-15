@@ -51,14 +51,21 @@ func runAdd() {
 	}
 	defer security.ZeroBytes(masterPassword)
 
-	// 5. Ambil salt
-	salt, err := vault.GetVaultSalt("data/vault.db")
+	//  5. Ambil vault meta (salt + integrity check data)
+	salt, checkCipher, checkNonce, err := vault.GetVaultMeta("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	// 6. Derive key (TANPA string)
+	//  6. Integrity check (VALIDASI MASTER PASSWORD)
+	err = vault.VerifyMasterPassword(masterPassword, salt, checkCipher, checkNonce)
+	if err != nil {
+		fmt.Println("❌ Wrong master password")
+		return
+	}
+
+	// 7. Derive key (master password SUDAH valid)
 	key, err := crypto.DeriveKey(masterPassword, salt)
 	if err != nil {
 		fmt.Println("Key derivation failed:", err)
@@ -66,14 +73,14 @@ func runAdd() {
 	}
 	defer security.ZeroBytes(key)
 
-	// 7. Encrypt password
+	// 8. Encrypt password
 	ciphertext, nonce, err := crypto.EncryptAESGCM(key, password)
 	if err != nil {
 		fmt.Println("Encryption failed:", err)
 		return
 	}
 
-	// 8. Simpan ke DB
+	// 9. Simpan ke DB
 	err = storage.InsertEntry(
 		"data/vault.db",
 		service,
