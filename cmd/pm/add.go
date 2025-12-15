@@ -5,12 +5,12 @@ import (
 
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/crypto"
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/input"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/security"
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/storage"
 	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/vault"
 	"github.com/spf13/cobra"
 )
 
-// addCmd represents the add command
 
 var addCmd = &cobra.Command{
 	Use:   "add",
@@ -36,21 +36,20 @@ func runAdd() {
 	fmt.Scanln(&username)
 
 	// 3. Password (hidden)
-	password, err := input.ReadHidden("Password:")
+	password, err := input.ReadHidden("Password: ")
 	if err != nil {
 		fmt.Println("Error reading password:", err)
 		return
 	}
+	defer security.ZeroBytes(password)
 
-	fmt.Println()
-	
 	// 4. Master password
-	masterPasswordStr, err := input.ReadHidden("Enter master password: ")
+	masterPassword, err := input.ReadHidden("Enter master password: ")
 	if err != nil {
 		fmt.Println("Error reading master password:", err)
 		return
 	}
-	masterPassword := []byte(masterPasswordStr)
+	defer security.ZeroBytes(masterPassword)
 
 	// 5. Ambil salt
 	salt, err := vault.GetVaultSalt("data/vault.db")
@@ -59,12 +58,13 @@ func runAdd() {
 		return
 	}
 
-	// 6. Derive key
-	key, err := crypto.DeriveKey(string(masterPassword), salt)
+	// 6. Derive key (TANPA string)
+	key, err := crypto.DeriveKey(masterPassword, salt)
 	if err != nil {
 		fmt.Println("Key derivation failed:", err)
 		return
 	}
+	defer security.ZeroBytes(key)
 
 	// 7. Encrypt password
 	ciphertext, nonce, err := crypto.EncryptAESGCM(key, password)

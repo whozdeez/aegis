@@ -4,7 +4,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-func DeriveKey(masterPassword string, salt []byte) ([]byte, error) {
+func DeriveKey(masterPassword []byte, salt []byte) ([]byte, error) {
 	const (
 		N = 1 << 15 // CPU/memory cost
 		r = 8
@@ -13,7 +13,7 @@ func DeriveKey(masterPassword string, salt []byte) ([]byte, error) {
 	)
 
 	return scrypt.Key(
-		[]byte(masterPassword),
+		masterPassword,
 		salt,
 		N,
 		r,
