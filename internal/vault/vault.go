@@ -1,4 +1,4 @@
-package main
+package vault
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func getVaultSalt(dbPath string) ([]byte, error) {
+func GetVaultSalt(dbPath string) ([]byte, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err

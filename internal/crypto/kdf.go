@@ -1,10 +1,10 @@
-package main
+package crypto
 
 import (
 	"golang.org/x/crypto/scrypt"
 )
 
-func deriveKey(masterPassword string, salt []byte) ([]byte, error) {
+func DeriveKey(masterPassword string, salt []byte) ([]byte, error) {
 	const (
 		N = 1 << 15 // CPU/memory cost
 		r = 8

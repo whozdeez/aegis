@@ -1,9 +1,12 @@
-
 package main
 
 import (
 	"fmt"
 
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/crypto"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/input"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/storage"
+	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -33,15 +36,16 @@ func runAdd() {
 	fmt.Scanln(&username)
 
 	// 3. Password (hidden)
-	fmt.Print("Password: ")
-	password, err := readHiddenInput()
+	password, err := input.ReadHidden("Password:")
 	if err != nil {
 		fmt.Println("Error reading password:", err)
 		return
 	}
 
+	fmt.Println()
+	
 	// 4. Master password
-	masterPasswordStr, err := promptMasterPassword()
+	masterPasswordStr, err := input.ReadHidden("Enter master password: ")
 	if err != nil {
 		fmt.Println("Error reading master password:", err)
 		return
@@ -49,28 +53,28 @@ func runAdd() {
 	masterPassword := []byte(masterPasswordStr)
 
 	// 5. Ambil salt
-	salt, err := getVaultSalt("data/vault.db")
+	salt, err := vault.GetVaultSalt("data/vault.db")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
 	// 6. Derive key
-	key, err := deriveKey(string(masterPassword), salt)
+	key, err := crypto.DeriveKey(string(masterPassword), salt)
 	if err != nil {
 		fmt.Println("Key derivation failed:", err)
 		return
 	}
 
 	// 7. Encrypt password
-	ciphertext, nonce, err := encryptAESGCM(key, password)
+	ciphertext, nonce, err := crypto.EncryptAESGCM(key, password)
 	if err != nil {
 		fmt.Println("Encryption failed:", err)
 		return
 	}
 
 	// 8. Simpan ke DB
-	err = insertEntry(
+	err = storage.InsertEntry(
 		"data/vault.db",
 		service,
 		username,

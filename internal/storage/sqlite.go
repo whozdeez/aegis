@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func insertEntry(
+func InsertEntry(
 	dbPath string,
 	service string,
 	username string,
