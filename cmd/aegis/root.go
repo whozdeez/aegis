@@ -14,10 +14,12 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "pm",
-	Short: "Password Manager CLI",
-	Long:  "A simple and secure password manager CLI built with Go",
+	Use:   "aegis",
+	Short: "Aegis is a secure CLI password manager",
+	Long: `Aegis is a zero-knowledge, offline
+command-line password manager.`,
 }
+
 
 
 func Execute() {

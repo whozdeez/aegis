@@ -37,3 +37,5 @@ vault.db
 *.db
 data/**
 
+#binaries
+bin/
