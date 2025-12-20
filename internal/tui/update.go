@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -30,10 +29,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter":
-			fmt.Println("\nSelected:", m.Items[m.Cursor])
+			switch m.Cursor {
+			case 0:
+				m.Action = ActionAdd
+			case 1:
+				m.Action = ActionGet
+			case 2:
+				m.Action = ActionEdit
+			case 3:
+				m.Action = ActionDelete
+			case 4:
+				m.Action = ActionList
+			case 5:
+				m.Action = ActionChangeMaster
+			case 6:
+				m.Action = ActionExit
+			}
 			return m, tea.Quit
 		}
 	}
-
 	return m, nil
 }

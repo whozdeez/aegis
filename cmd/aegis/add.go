@@ -62,14 +62,6 @@ func runAdd() {
 
 	fmt.Println()
 
-	// ===== MASTER PASSWORD =====
-	masterPassword, err := input.ReadHidden("🔐 Enter master password: ")
-	if err != nil {
-		fmt.Println("Error reading master password:", err)
-		return
-	}
-	defer security.ZeroBytes(masterPassword)
-
 	// ===== VAULT META =====
 	salt, checkCipher, checkNonce, err := vault.GetVaultMeta("data/vault.db")
 	if err != nil {
@@ -77,11 +69,43 @@ func runAdd() {
 		return
 	}
 
-	// ===== INTEGRITY CHECK =====
-	if err := vault.VerifyMasterPassword(masterPassword, salt, checkCipher, checkNonce); err != nil {
-		fmt.Println("❌ Wrong master password")
+	const maxAttempts = 3
+	var masterPassword []byte
+	var key []byte
+
+	// ===== MASTER PASSWORD LOOP =====
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		masterPassword, err = input.ReadHidden("🔐 Enter master password: ")
+		if err != nil {
+			fmt.Println("Error reading master password:", err)
+			return
+		}
+
+		// integrity check
+		if err := vault.VerifyMasterPassword(masterPassword, salt, checkCipher, checkNonce); err != nil {
+			security.ZeroBytes(masterPassword)
+			fmt.Printf("❌ Wrong master password (%d/%d)\n", attempt, maxAttempts)
+			continue
+		}
+
+		// derive key (MASTER VALID)
+		key, err = crypto.DeriveKey(masterPassword, salt)
+		if err != nil {
+			security.ZeroBytes(masterPassword)
+			fmt.Println("Key derivation failed:", err)
+			return
+		}
+
+		break // SUCCESS
+	}
+
+	if key == nil {
+		fmt.Println("🔒 Too many failed attempts")
 		return
 	}
+
+	defer security.ZeroBytes(masterPassword)
+	defer security.ZeroBytes(key)
 
 	// ===== SUMMARY =====
 	fmt.Println("\nSummary:")
@@ -97,14 +121,6 @@ func runAdd() {
 		fmt.Println("ℹ Add cancelled")
 		return
 	}
-
-	// ===== DERIVE KEY =====
-	key, err := crypto.DeriveKey(masterPassword, salt)
-	if err != nil {
-		fmt.Println("Key derivation failed:", err)
-		return
-	}
-	defer security.ZeroBytes(key)
 
 	// ===== ENCRYPT =====
 	ciphertext, nonce, err := crypto.EncryptAESGCM(key, password)
@@ -128,4 +144,5 @@ func runAdd() {
 
 	fmt.Println("✔ Password saved successfully 🔐")
 }
+
 
