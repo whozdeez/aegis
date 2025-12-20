@@ -16,6 +16,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		case "ctrl+c", "q", "esc":
+			m.Action = ActionExit
 			return m, tea.Quit
 
 		case "up", "k":
