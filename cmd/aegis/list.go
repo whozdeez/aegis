@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/storage"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/storage"
 	"github.com/spf13/cobra"
 )
 

@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/crypto"
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/input"
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/security"
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/vault"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/crypto"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/input"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/security"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/vault"
 	"github.com/spf13/cobra"
 	_ "modernc.org/sqlite"
 )

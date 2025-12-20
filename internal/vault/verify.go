@@ -3,7 +3,7 @@ package vault
 import (
 	"errors"
 
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/crypto"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/crypto"
 )
 
 const IntegrityCheckPlaintext = "vault-check-ok"

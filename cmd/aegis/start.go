@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/GanesaAprilyanPhanama/passmanager-cli/internal/tui"
+	"github.com/GanesaAprilyanPhanama/aegis/internal/tui"
 	"github.com/spf13/cobra"
 )
 
