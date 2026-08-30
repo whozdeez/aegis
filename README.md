@@ -87,7 +87,7 @@ Navigate using:
  Build from source
 
 ```bash
-git clone https://github.com/GanesaAprilyanPhanama/aegis.git
+git clone https://github.com/whozdeez/aegis.git
 cd aegis
 go build -o aegis ./cmd/aegis
 ```
